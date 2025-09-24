@@ -11,22 +11,8 @@ if [[ -z "${DESTINATION}" || -z "${PORT}" || -z "${CHAT}" ]]; then
   exit 1
 fi
 
-# ==== Config del repo ====
-REPO_OWNER="RamiroHernandezB"
-REPO_NAME="odoo-19-docker-compose"
-REPO_HTTPS="https://github.com/${REPO_OWNER}/${REPO_NAME}.git"
-BRANCH="${BRANCH:-main}"
-
-# 1) Clonar plantilla Odoo 19 (privado con GH_TOKEN o público sin token)
-if [[ -n "${GH_TOKEN:-}" ]]; then
-  echo ">> Clonando repo privado con GH_TOKEN..."
-  git -c http.extraheader="Authorization: Bearer ${GH_TOKEN}" \
-      clone --depth=1 --branch "$BRANCH" "$REPO_HTTPS" "$DESTINATION"
-else
-  echo ">> Clonando repo público (sin GH_TOKEN)..."
-  git clone --depth=1 --branch "$BRANCH" "$REPO_HTTPS" "$DESTINATION"
-fi
-
+# 1) Clonar tu plantilla Odoo 19
+git clone --depth=1 https://github.com/RamiroHernandezB/odoo-19-docker-compose "$DESTINATION"
 rm -rf "$DESTINATION/.git"
 
 # 2) Crear directorios necesarios
@@ -38,8 +24,11 @@ sudo chmod -R 700 "$DESTINATION"
 
 # 4) Ajuste inotify en Linux (omitir en macOS)
 if [[ "${OSTYPE:-}" != "darwin"* ]]; then
-  grep -qF "fs.inotify.max_user_watches" /etc/sysctl.conf || echo "fs.inotify.max_user_watches = 524288" | sudo tee -a /etc/sysctl.conf
-  grep -qF "fs.inotify.max_user_instances" /etc/sysctl.conf || echo "fs.inotify.max_user_instances = 8192" | sudo tee -a /etc/sysctl.conf
+  if grep -qF "fs.inotify.max_user_watches" /etc/sysctl.conf; then
+    grep -F "fs.inotify.max_user_watches" /etc/sysctl.conf || true
+  else
+    echo "fs.inotify.max_user_watches = 524288" | sudo tee -a /etc/sysctl.conf
+  fi
   sudo sysctl -p
 else
   echo "Running on macOS. Skipping inotify configuration."
