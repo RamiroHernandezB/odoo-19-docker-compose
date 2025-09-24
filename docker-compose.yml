@@ -1,8 +1,8 @@
-version: '1'
+version: '2'
 services:
   db:
     image: postgres:17
-    user: root
+    # user: root           
     environment:
       - POSTGRES_USER=odoo
       - POSTGRES_PASSWORD=odoo19@2025
@@ -13,7 +13,7 @@ services:
 
   odoo19:
     image: odoo:19
-    user: root
+    user: root              
     depends_on:
       - db
     ports:
